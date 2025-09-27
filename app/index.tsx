@@ -1,18 +1,28 @@
 
 import React, { useState, useEffect } from 'react';
-import { Text, View, ScrollView, Alert } from 'react-native';
+import { Text, View, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { commonStyles, colors, buttonStyles } from '../styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import * as SMS from 'expo-sms';
 import * as Contacts from 'expo-contacts';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SimpleBottomSheet from '../components/BottomSheet';
 import Button from '../components/Button';
 import SOSButton from '../components/SOSButton';
 import QuickActions from '../components/QuickActions';
 import ReminderCard from '../components/ReminderCard';
+import HealthDashboard from '../components/HealthDashboard';
+import SafetyMonitor from '../components/SafetyMonitor';
+import AIAssistant from '../components/AIAssistant';
+import EntertainmentHub from '../components/EntertainmentHub';
+import SocialConnector from '../components/SocialConnector';
+import DigitalSecurity from '../components/DigitalSecurity';
+import ExtraServices from '../components/ExtraServices';
+import FeatureSummary from '../components/FeatureSummary';
 
 interface Reminder {
   id: string;
@@ -34,6 +44,22 @@ export default function SafeCompanionHome() {
   const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [isRemindersVisible, setIsRemindersVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<'home' | 'health' | 'safety' | 'ai' | 'entertainment' | 'social' | 'security' | 'services' | 'features'>('home');
+  const [healthData, setHealthData] = useState({
+    bloodPressure: { systolic: 120, diastolic: 80 },
+    heartRate: 72,
+    steps: 3500,
+    hydration: 6,
+    sleep: 7.5,
+    mood: 'good' as 'excellent' | 'good' | 'fair' | 'poor'
+  });
+  const [safetyStatus, setSafetyStatus] = useState({
+    fallDetection: true,
+    homeSecure: true,
+    batteryLevel: 85,
+    lastActivity: new Date(),
+    inSafeZone: true
+  });
 
   useEffect(() => {
     initializeApp();
@@ -202,113 +228,402 @@ export default function SafeCompanionHome() {
       onPress: () => setIsRemindersVisible(true),
       badge: getTodaysReminders().length,
     },
+    {
+      icon: 'medical' as keyof typeof Ionicons.glyphMap,
+      title: 'Health',
+      onPress: () => setActiveTab('health'),
+    },
+    {
+      icon: 'shield-checkmark' as keyof typeof Ionicons.glyphMap,
+      title: 'Safety',
+      onPress: () => setActiveTab('safety'),
+    },
   ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'health':
+        return (
+          <HealthDashboard
+            healthData={healthData}
+            onUpdateHealth={(data) => setHealthData(prev => ({ ...prev, ...data }))}
+          />
+        );
+      case 'safety':
+        return (
+          <SafetyMonitor
+            safetyStatus={safetyStatus}
+            onUpdateSafety={(status) => setSafetyStatus(prev => ({ ...prev, ...status }))}
+          />
+        );
+      case 'ai':
+        return <AIAssistant onVoiceCommand={onVoiceCommand} />;
+      case 'entertainment':
+        return <EntertainmentHub />;
+      case 'social':
+        return <SocialConnector />;
+      case 'security':
+        return <DigitalSecurity />;
+      case 'services':
+        return <ExtraServices />;
+      case 'features':
+        return <FeatureSummary />;
+      default:
+        return (
+          <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20 }}>
+            <View style={commonStyles.content}>
+              {/* Header */}
+              <View style={{ alignItems: 'center', marginBottom: 40 }}>
+                <Text style={commonStyles.title}>SafeCompanion</Text>
+                <Text style={commonStyles.textSecondary}>Your comprehensive safety and wellness partner</Text>
+              </View>
+
+              {/* SOS Button - Most prominent */}
+              <SOSButton onPress={sendSOSAlert} />
+
+              {/* Quick Actions */}
+              <QuickActions actions={quickActions} />
+
+              {/* Today's Reminders Preview */}
+              {getTodaysReminders().length > 0 && (
+                <View style={[commonStyles.card, { marginTop: 20 }]}>
+                  <Text style={[commonStyles.subtitle, { marginBottom: 16 }]}>
+                    Today&apos;s Reminders
+                  </Text>
+                  {getTodaysReminders().slice(0, 2).map((reminder) => (
+                    <ReminderCard
+                      key={reminder.id}
+                      reminder={reminder}
+                      onToggle={toggleReminderComplete}
+                    />
+                  ))}
+                  {getTodaysReminders().length > 2 && (
+                    <Text style={[commonStyles.textSecondary, { textAlign: 'center', marginTop: 8 }]}>
+                      +{getTodaysReminders().length - 2} more reminders
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              {/* Feature Categories */}
+              <View style={[commonStyles.card, { marginTop: 20 }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <Text style={[commonStyles.subtitle, { flex: 1 }]}>
+                    All Features (50+ Tools)
+                  </Text>
+                  <TouchableOpacity onPress={() => setActiveTab('features')}>
+                    <Text style={[commonStyles.textSecondary, { color: colors.primary, fontSize: 14 }]}>
+                      View All →
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={[commonStyles.textSecondary, { marginBottom: 16, textAlign: 'center' }]}>
+                  Comprehensive safety, health, and wellness platform
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                  <TouchableOpacity
+                    style={[commonStyles.card, { width: '48%', marginBottom: 12, backgroundColor: colors.backgroundAlt }]}
+                    onPress={() => setActiveTab('ai')}
+                  >
+                    <Ionicons name="chatbubbles" size={28} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 8 }} />
+                    <Text style={[commonStyles.text, { fontSize: 15 }]}>AI Assistant</Text>
+                    <Text style={[commonStyles.textSecondary, { fontSize: 11 }]}>Voice help & chat</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[commonStyles.card, { width: '48%', marginBottom: 12, backgroundColor: colors.backgroundAlt }]}
+                    onPress={() => setActiveTab('entertainment')}
+                  >
+                    <Ionicons name="game-controller" size={28} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 8 }} />
+                    <Text style={[commonStyles.text, { fontSize: 15 }]}>Entertainment</Text>
+                    <Text style={[commonStyles.textSecondary, { fontSize: 11 }]}>Games & music</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[commonStyles.card, { width: '48%', marginBottom: 12, backgroundColor: colors.backgroundAlt }]}
+                    onPress={() => setActiveTab('social')}
+                  >
+                    <Ionicons name="people" size={28} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 8 }} />
+                    <Text style={[commonStyles.text, { fontSize: 15 }]}>Social</Text>
+                    <Text style={[commonStyles.textSecondary, { fontSize: 11 }]}>Family & friends</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[commonStyles.card, { width: '48%', marginBottom: 12, backgroundColor: colors.backgroundAlt }]}
+                    onPress={() => setActiveTab('security')}
+                  >
+                    <Ionicons name="shield-checkmark" size={28} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 8 }} />
+                    <Text style={[commonStyles.text, { fontSize: 15 }]}>Security</Text>
+                    <Text style={[commonStyles.textSecondary, { fontSize: 11 }]}>Digital safety</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[commonStyles.card, { width: '48%', marginBottom: 12, backgroundColor: colors.backgroundAlt }]}
+                    onPress={() => setActiveTab('services')}
+                  >
+                    <Ionicons name="storefront" size={28} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 8 }} />
+                    <Text style={[commonStyles.text, { fontSize: 15 }]}>Services</Text>
+                    <Text style={[commonStyles.textSecondary, { fontSize: 11 }]}>Home & delivery</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[commonStyles.card, { width: '48%', marginBottom: 12, backgroundColor: colors.backgroundAlt }]}
+                    onPress={() => setIsSettingsVisible(true)}
+                  >
+                    <Ionicons name="settings" size={28} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 8 }} />
+                    <Text style={[commonStyles.text, { fontSize: 15 }]}>Settings</Text>
+                    <Text style={[commonStyles.textSecondary, { fontSize: 11 }]}>Preferences</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+        );
+    }
+  };
+
+  const onVoiceCommand = (command: string) => {
+    console.log('Voice command received:', command);
+    if (command.toLowerCase().includes('help') || command.toLowerCase().includes('emergency')) {
+      sendSOSAlert();
+    }
+  };
 
   return (
     <SafeAreaView style={commonStyles.container}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20 }}>
-        <View style={commonStyles.content}>
-          {/* Header */}
-          <View style={{ alignItems: 'center', marginBottom: 40 }}>
-            <Text style={commonStyles.title}>SafeCompanion</Text>
-            <Text style={commonStyles.textSecondary}>Your safety and wellness partner</Text>
-          </View>
-
-          {/* SOS Button - Most prominent */}
-          <SOSButton onPress={sendSOSAlert} />
-
-          {/* Quick Actions */}
-          <QuickActions actions={quickActions} />
-
-          {/* Today's Reminders Preview */}
-          {getTodaysReminders().length > 0 && (
-            <View style={[commonStyles.card, { marginTop: 20 }]}>
-              <Text style={[commonStyles.subtitle, { marginBottom: 16 }]}>
-                Today&apos;s Reminders
-              </Text>
-              {getTodaysReminders().slice(0, 2).map((reminder) => (
-                <ReminderCard
-                  key={reminder.id}
-                  reminder={reminder}
-                  onToggle={toggleReminderComplete}
-                />
-              ))}
-              {getTodaysReminders().length > 2 && (
-                <Text style={[commonStyles.textSecondary, { textAlign: 'center', marginTop: 8 }]}>
-                  +{getTodaysReminders().length - 2} more reminders
-                </Text>
-              )}
-            </View>
-          )}
-
-          {/* Settings Button */}
-          <View style={[commonStyles.buttonContainer, { marginTop: 30 }]}>
-            <Button
-              text="Settings"
-              onPress={() => setIsSettingsVisible(true)}
-              style={buttonStyles.secondaryButton}
-              textStyle={{ color: colors.primary }}
-            />
-          </View>
+      {/* Navigation Header */}
+      {activeTab !== 'home' && (
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 20,
+          paddingVertical: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          backgroundColor: colors.background
+        }}>
+          <TouchableOpacity
+            onPress={() => setActiveTab('home')}
+            style={{ marginRight: 16 }}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[commonStyles.subtitle, { flex: 1, textAlign: 'left' }]}>
+            {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+          </Text>
         </View>
-      </ScrollView>
+      )}
+
+      {/* Main Content */}
+      {renderContent()}
 
       {/* Settings Bottom Sheet */}
       <SimpleBottomSheet
         isVisible={isSettingsVisible}
         onClose={() => setIsSettingsVisible(false)}
       >
-        <View style={{ padding: 20 }}>
-          <Text style={[commonStyles.subtitle, { marginBottom: 20 }]}>Settings</Text>
-          
-          <View style={[commonStyles.card, { marginBottom: 16 }]}>
-            <View style={commonStyles.row}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <Ionicons name="people" size={24} color={colors.primary} />
-                <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
-                  Emergency Contacts
-                </Text>
+        <ScrollView style={{ maxHeight: 500 }}>
+          <View style={{ padding: 20 }}>
+            <Text style={[commonStyles.subtitle, { marginBottom: 20 }]}>Settings & Configuration</Text>
+            
+            {/* Core Settings */}
+            <Text style={[commonStyles.text, { marginBottom: 12, textAlign: 'left', fontWeight: 'bold' }]}>
+              Core Settings
+            </Text>
+            
+            <TouchableOpacity style={[commonStyles.card, { marginBottom: 12 }]}>
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="people" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    Emergency Contacts
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </View>
-          </View>
+            </TouchableOpacity>
 
-          <View style={[commonStyles.card, { marginBottom: 16 }]}>
-            <View style={commonStyles.row}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <Ionicons name="location" size={24} color={colors.primary} />
-                <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
-                  Safe Zone Settings
-                </Text>
+            <TouchableOpacity style={[commonStyles.card, { marginBottom: 12 }]}>
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="location" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    Safe Zone Settings
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </View>
-          </View>
+            </TouchableOpacity>
 
-          <View style={[commonStyles.card, { marginBottom: 16 }]}>
-            <View style={commonStyles.row}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <Ionicons name="notifications" size={24} color={colors.primary} />
-                <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
-                  Notification Settings
-                </Text>
+            <TouchableOpacity style={[commonStyles.card, { marginBottom: 12 }]}>
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="notifications" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    Notification Settings
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </View>
-          </View>
+            </TouchableOpacity>
 
-          <View style={[commonStyles.card, { marginBottom: 16 }]}>
-            <View style={commonStyles.row}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <Ionicons name="medical" size={24} color={colors.primary} />
-                <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
-                  Medical Information
-                </Text>
+            <TouchableOpacity style={[commonStyles.card, { marginBottom: 20 }]}>
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="medical" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    Medical Information
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            {/* Feature Access */}
+            <Text style={[commonStyles.text, { marginBottom: 12, textAlign: 'left', fontWeight: 'bold' }]}>
+              Feature Categories
+            </Text>
+            
+            <TouchableOpacity 
+              style={[commonStyles.card, { marginBottom: 8 }]}
+              onPress={() => {
+                setIsSettingsVisible(false);
+                setActiveTab('health');
+              }}
+            >
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="heart" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    Health & Wellness (10 features)
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[commonStyles.card, { marginBottom: 8 }]}
+              onPress={() => {
+                setIsSettingsVisible(false);
+                setActiveTab('safety');
+              }}
+            >
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="shield" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    Safety & Emergency (10 features)
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[commonStyles.card, { marginBottom: 8 }]}
+              onPress={() => {
+                setIsSettingsVisible(false);
+                setActiveTab('ai');
+              }}
+            >
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="brain" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    AI Intelligence (10 features)
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[commonStyles.card, { marginBottom: 8 }]}
+              onPress={() => {
+                setIsSettingsVisible(false);
+                setActiveTab('entertainment');
+              }}
+            >
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="musical-notes" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    Entertainment & Cognitive (5 features)
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[commonStyles.card, { marginBottom: 8 }]}
+              onPress={() => {
+                setIsSettingsVisible(false);
+                setActiveTab('social');
+              }}
+            >
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="people-circle" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    Social Connectivity (5 features)
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[commonStyles.card, { marginBottom: 8 }]}
+              onPress={() => {
+                setIsSettingsVisible(false);
+                setActiveTab('security');
+              }}
+            >
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="lock-closed" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    Digital Security (5 features)
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[commonStyles.card, { marginBottom: 20 }]}
+              onPress={() => {
+                setIsSettingsVisible(false);
+                setActiveTab('services');
+              }}
+            >
+              <View style={commonStyles.row}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="storefront" size={24} color={colors.primary} />
+                  <Text style={[commonStyles.text, { marginLeft: 12, textAlign: 'left' }]}>
+                    Extra Services (5 features)
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+
+            {/* App Info */}
+            <View style={[commonStyles.card, { backgroundColor: colors.backgroundAlt, alignItems: 'center' }]}>
+              <Text style={[commonStyles.text, { marginBottom: 8, fontWeight: 'bold' }]}>
+                SafeCompanion Pro
+              </Text>
+              <Text style={[commonStyles.textSecondary, { textAlign: 'center', marginBottom: 8 }]}>
+                50+ Features for Complete Senior Care
+              </Text>
+              <Text style={[commonStyles.textSecondary, { fontSize: 12 }]}>
+                Version 2.0 • All features active
+              </Text>
             </View>
           </View>
-        </View>
+        </ScrollView>
       </SimpleBottomSheet>
 
       {/* Reminders Bottom Sheet */}
