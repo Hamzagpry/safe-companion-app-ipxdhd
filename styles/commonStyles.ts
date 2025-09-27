@@ -1,24 +1,39 @@
+
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 export const colors = {
-  primary: '#162456',    // Material Blue
-  secondary: '#193cb8',  // Darker Blue
-  accent: '#64B5F6',     // Light Blue
-  background: '#101824',  // Keeping dark background
-  backgroundAlt: '#162133',  // Keeping dark background
-  text: '#e3e3e3',       // Keeping light text
-  grey: '#90CAF9',       // Light Blue Grey
-  card: '#193cb8',       // Keeping dark card background
+  primary: '#2E7D32',      // Calming green
+  secondary: '#4CAF50',    // Lighter green
+  accent: '#FF9800',       // Orange for important elements like SOS
+  background: '#FFFFFF',   // White background for light theme
+  backgroundAlt: '#F5F5F5', // Light gray for cards
+  text: '#212121',         // Dark text for high contrast
+  textSecondary: '#757575', // Gray text for secondary info
+  success: '#4CAF50',      // Green for success states
+  warning: '#FF9800',      // Orange for warnings
+  danger: '#F44336',       // Red for emergency/SOS
+  card: '#FFFFFF',         // White cards
+  border: '#E0E0E0',       // Light border
+  shadow: 'rgba(0, 0, 0, 0.1)', // Subtle shadow
 };
 
 export const buttonStyles = StyleSheet.create({
-  instructionsButton: {
+  sosButton: {
+    backgroundColor: colors.danger,
+    alignSelf: 'center',
+    width: '100%',
+    paddingVertical: 20,
+    borderRadius: 50,
+  },
+  primaryButton: {
     backgroundColor: colors.primary,
     alignSelf: 'center',
     width: '100%',
   },
-  backButton: {
+  secondaryButton: {
     backgroundColor: colors.backgroundAlt,
+    borderWidth: 2,
+    borderColor: colors.primary,
     alignSelf: 'center',
     width: '100%',
   },
@@ -44,18 +59,36 @@ export const commonStyles = StyleSheet.create({
     justifyContent: 'center',
     maxWidth: 800,
     width: '100%',
+    paddingHorizontal: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 32,
+    fontWeight: '700',
     textAlign: 'center',
     color: colors.text,
-    marginBottom: 10
+    marginBottom: 16,
+    lineHeight: 40,
+  },
+  subtitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: colors.text,
+    marginBottom: 12,
+    lineHeight: 32,
   },
   text: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '500',
     color: colors.text,
+    marginBottom: 12,
+    lineHeight: 28,
+    textAlign: 'center',
+  },
+  textSecondary: {
+    fontSize: 18,
+    fontWeight: '400',
+    color: colors.textSecondary,
     marginBottom: 8,
     lineHeight: 24,
     textAlign: 'center',
@@ -64,26 +97,44 @@ export const commonStyles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: 20,
+    marginVertical: 16,
   },
   buttonContainer: {
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: 20,
+    marginVertical: 8,
   },
   card: {
-    backgroundColor: colors.backgroundAlt,
-    borderColor: colors.grey,
+    backgroundColor: colors.card,
+    borderColor: colors.border,
     borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    marginVertical: 8,
+    borderRadius: 16,
+    padding: 20,
+    marginVertical: 12,
     width: '100%',
-    boxShadow: '0px 2px 3px rgba(0, 0, 0, 0.1)',
-    elevation: 2,
+    boxShadow: `0px 4px 8px ${colors.shadow}`,
+    elevation: 4,
   },
   icon: {
-    width: 60,
-    height: 60,
-    tintColor: "white",
+    width: 80,
+    height: 80,
+    tintColor: colors.primary,
+  },
+  sosIcon: {
+    width: 100,
+    height: 100,
+    tintColor: colors.danger,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  column: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    flex: 1,
   },
 });
